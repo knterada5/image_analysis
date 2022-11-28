@@ -48,8 +48,6 @@ def detect_background(image_path):
     
     image_cut = cv2.bitwise_and(image_bgra, image_bgra, mask=mask)
     return image_cut  
-
-def bgr2hsv():
     
 
 if __name__ == '__main__':
