@@ -7,6 +7,14 @@ import tkinter.messagebox as messagebox
 import matplotlib.pyplot as plt
 import pandas as pd
 
+def loop_double():
+    aa = [1,2,3,4,5]
+    bb = ['a','b','c','d','e']
+
+    for (a, (i, b)) in zip(aa, enumerate(bb)):
+        print("a is", a, "b no is ", i, "b is ", b)
+
+
 def change():
     hsv = []
     arr_bgr = np.array([[100,80,200,255], [200,200,200,255], [150,150,150,255], [250,250,250,255], [0,0,0,255], [255,255,255,255]])
@@ -177,7 +185,9 @@ if __name__ == '__main__':
     args = sys.argv
     # change()
 
-    make_plot(args[1])
+    loop_double()
+
+    # make_plot(args[1])
     
     # detect_background(os.path.abspath(args[1]))
     # disp()
