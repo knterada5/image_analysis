@@ -8,7 +8,8 @@ import datetime
 from matplotlib import colors
 import plotly.graph_objects as go
 import plotly.express as px
-import plotly.io as pio
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.animation import FuncAnimation
 
 extensions = (".jpeg",".jpg",".png")
 flag_bgr = True
@@ -100,8 +101,8 @@ def make_histgram():
             hists = np.append(hists, 0)
             # ax.plot(bins, hists, color=color, label=label)
             # ax.legend()
-            fig.add_trace(go.Scatter(x=bins, y=hists))
-        fig.show()
+        #     fig.add_trace(go.Scatter(x=bins, y=hists))
+        # fig.show()
     
     def plot_hsv(ax):
         hsv_colors = ('c', 'm', 'y')
@@ -150,25 +151,28 @@ def bgr2hsv(array_bgra):
 
     return int(h), int(s), int(v)
 
+figg = plt.figure()
+ax = figg.add_subplot(1,1,1, projection="3d")
+
 def make_plot():
     global array_bgra, array_hsv
     array_bgr = array_bgra[:,:3]
     pixel_colors = array_bgr.reshape(array_bgr.shape[0], 3)
     norm = colors.Normalize(vmin=0., vmax=255.)
     # norm.autoscale(pixel_colors)
-    
-    fig = plt.figure()
-    ax = fig.add_subplot(1,2,1, projection='3d')
 
     b,g,r = pixel_colors[:,0], pixel_colors[:,1], pixel_colors[:,2]
     array_colors = pixel_colors[:,[2,1,0]]
     
     array_colors = norm(array_colors).tolist()
-    fig = px.scatter_3d(x=b,y=g,z=r)
-    fig.show()
-    fig.write_html("result.html")
-    # ax.scatter(b, g, r, facecolors=array_colors, marker=".")
-    # plt.show()
+    # fig = px.scatter_3d(x=b,y=g,z=r)
+    # fig.show()
+    # fig.write_html("result.html")
+    ax.scatter(b, g, r, facecolors=array_colors, marker=".")
+    plt.show()
+
+
+    
 
 if __name__ == '__main__':
     args = sys.argv
@@ -179,5 +183,20 @@ if __name__ == '__main__':
     os.chdir(result_dir)
     cv2.imwrite('cut.png', image)
     remove_invisible('./cut.png')
-    make_histgram()
+    # make_histgram()
     make_plot()
+
+# print('start ani')
+# def plt_graph3d(angle):
+#     ax.view_init(azim=angle*5)
+#     print('rotoate')
+    
+# ani = FuncAnimation(
+#     figg,
+#     func=plt_graph3d,
+#     frames=72,
+#     init_func=make_plot,
+#     interval=300
+# )
+
+# ani.save("rolling.gif", writer="pillow")
