@@ -1,11 +1,12 @@
-import sys
-import os
-import glob
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import colors
 import datetime
+import glob
+import os
+import sys
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import colors
 
 extensions = (".jpeg",".jpg",".png")
 

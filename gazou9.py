@@ -1,12 +1,13 @@
-from ast import arg
-from fileinput import isfirstline
-from genericpath import exists
-import cv2
-import numpy as np
-import sys
-import os
 import glob
 import math
+import os
+import sys
+from ast import arg
+from fileinput import isfirstline
+
+import cv2
+import numpy as np
+from genericpath import exists
 
 isSingle = True
 args = sys.argv     # 引数取得

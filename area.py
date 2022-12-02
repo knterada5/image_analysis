@@ -1,15 +1,15 @@
-from multiprocessing.sharedctypes import Value
 import string
-from webbrowser import Grail
-import cv2
 import sys
-from cv2 import cvtColor
-from cv2 import COLOR_BGR2HSV
-from matplotlib import pyplot as plt
-import numpy as np
 import tkinter
-from tkinter import colorchooser
-from tkinter import filedialog
+from multiprocessing.sharedctypes import Value
+from tkinter import colorchooser, filedialog
+from webbrowser import Grail
+
+import cv2
+import numpy as np
+from cv2 import COLOR_BGR2HSV, cvtColor
+from matplotlib import pyplot as plt
+
 
 # 輪郭の検出
 def detectConts(img):

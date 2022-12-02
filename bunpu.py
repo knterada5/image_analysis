@@ -1,12 +1,13 @@
 import imghdr
+import os
+import sys
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
-from matplotlib import colors
-import sys
-import os
+
 args = sys.argv
 
 path = os.path.abspath(args[1])

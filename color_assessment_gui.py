@@ -1,7 +1,8 @@
-import color_assessment
 import tkinter
-from tkinter import filedialog
 import tkinter.messagebox as messagebox
+from tkinter import filedialog
+
+import color_assessment
 
 image_folder_path = None
 result_folder_path = None

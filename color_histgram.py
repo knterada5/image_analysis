@@ -1,15 +1,16 @@
-import cv2
-import sys
-import numpy as np
-import os
-import glob
-import matplotlib.pyplot as plt
 import datetime
-from matplotlib import colors
-import plotly.graph_objects as go
+import glob
+import os
+import sys
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
 import plotly.express as px
-from mpl_toolkits.mplot3d import Axes3D
+import plotly.graph_objects as go
+from matplotlib import colors
 from matplotlib.animation import FuncAnimation
+from mpl_toolkits.mplot3d import Axes3D
 
 extensions = (".jpeg",".jpg",".png")
 flag_bgr = True
