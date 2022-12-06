@@ -23,7 +23,7 @@ def get_image_path(arg_path):
     if os.path.isfile(arg_path):
         if  arg_path.lower().endswith(extensions):
             full_path = os.path.abspath(arg_path)
-            return [str(full_path)]
+            return str(full_path)
         else:
             raise Exception('Not image file')
     else:
@@ -152,8 +152,8 @@ def bgr2hsv(array_bgra):
 
     return int(h), int(s), int(v)
 
-figg = plt.figure()
-ax = figg.add_subplot(1,1,1, projection="3d")
+# figg = plt.figure()
+# ax = figg.add_subplot(1,1,1, projection="3d")
 
 def make_plot():
     global array_bgra, array_hsv

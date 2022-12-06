@@ -7,6 +7,32 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import time
+
+
+def main():
+    # delete_alpha()
+    print('cv2')
+    start = time.time()
+    hsv_cv2 = bgr2hsv_cv2()
+    print(time.time() - start)
+    print(hsv_cv2)
+    print('kenchi')
+    sstart = time.time()
+    image = cv2.imread('./2.webp')
+    hsv = np.apply_along_axis(lambda x: bgr2hsv(x), 2, image)
+    print(time.time() - sstart)
+    print(hsv)
+
+
+def bgr2hsv_cv2():
+    image = cv2.imread('./2.webp')
+    return cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    
+
+def delete_alpha():
+    array = np.array([[1,1,1,0], [2,2,2,0],[3,3,3,3],[4,4,4,4],[5,5,5,0]])
+    
 
 
 def loop_double():
@@ -30,34 +56,34 @@ def change():
     # hsv = map(lambda x: bgr2hsv(x), arr_bgr)
     # print(hsv)
 
-def bgr2hsv(img):
-    b,g,r = int(img[0]), int(img[1]), int(img[2])
-    bgr_max = max(b,g,r)
-    bgr_min = min(b,g,r)
-    
-    # Hue
-    h = 0
-    if bgr_max == bgr_min:
+def bgr2hsv(bgr):
+        b,g,r = int(bgr[0]), int(bgr[1]), int(bgr[2])
+        bgr_max = max(b,g,r)
+        bgr_min = min(b,g,r)
+        
+        # Hue
         h = 0
-    elif b == bgr_max:
-        h = 60 * (r - g) / (bgr_max - bgr_min) + 240
-    elif g == bgr_max:
-        h = 60 * (b - r) / (bgr_max - bgr_min) + 120
-    elif r == bgr_max:
-        h = 60 * (g - b) / (bgr_max - bgr_min)
-    if h < 0:
-        h += 360
-    
+        if bgr_max == bgr_min:
+            h = 0
+        elif b == bgr_max:
+            h = 60 * (r - g) / (bgr_max - bgr_min) + 240
+        elif g == bgr_max:
+            h = 60 * (b - r) / (bgr_max - bgr_min) + 120
+        elif r == bgr_max:
+            h = 60 * (g - b) / (bgr_max - bgr_min)
+        if h < 0:
+            h += 360
+        
 
-    # S
-    if bgr_max == 0:
-        s = 0
-    else: 
-        s = (bgr_max - bgr_min) / bgr_max * 255
+        # S
+        if bgr_max == 0:
+            s = 0
+        else: 
+            s = (bgr_max - bgr_min) / bgr_max * 255
 
-    # v
-    v = bgr_max    
-    return int(h),int(s),int(v)
+        # v
+        v = bgr_max    
+        return [h,s,v]
 
 
 def make_plot(image_path):
@@ -184,10 +210,11 @@ def detect_background(img_path):
     cv2.imwrite('1.png', img_bool)
 
 if __name__ == '__main__':
-    args = sys.argv
+    main()
+    # args = sys.argv
     # change()
 
-    loop_double()
+    # loop_double()
 
     # make_plot(args[1])
     

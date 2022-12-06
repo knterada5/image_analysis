@@ -1,50 +1,77 @@
-import os
 import tkinter as tk
-import tkinter.messagebox as messagebox
 import tkinter.ttk as ttk
-import tkinterdnd2
-from tkinterdnd2 import *
-from tkinter import *
+import tkinterdnd2 as dnd2
+import test_tab
+from PIL import Image, ImageTk
 
+import os
 
+import tkinter.filedialog as filedialog
+import glob
+import re
+import color_histgram
 
-def disp():
-    root = tkinterdnd2.Tk()
-    root.title("Image analysis Top")
-    root.geometry('300x200')
-
-    notebook = ttk.Notebook(root)
-
-    tab_1 = tk.Frame(notebook)
-
-    notebook.add(tab_1, text="Color histgram")
-    var = tk.StringVar()
-    def drop(event):
-        var.set(event.data)
-        print('drop')
-    data_path_type = ('ファイル', 'フォルダ')
-    combobox = ttk.Combobox(tab_1, values=data_path_type, state='readonly')
-    combobox.current(0)
-    label_image_path = ttk.Label(tab_1, text="ラベルだよ")
-
-    entry = Entry(root, textvariable=var)
-    entry.drop_target_register(DND_FILES)
-    entry.dnd_bind('<<Drop>>', drop)
-    entry.grid(column=2, row=1)
-    
-    notebook.grid(column=0, row=0)
-    combobox.grid(column=0, row=0)
-    label_image_path.grid(column=1, row=0)
-    
-    
-
+def main():
+    root = dnd2.Tk()
+    root.geoetry('400x200')
+    root.title('Image analysis')
     root.mainloop()
 
+class Application(ttk.Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.pack(expand=True, fill='both')
+        self.create_tabs()
+        return
     
+    def create_tabs(self):
+        pass
 
+class HistogramTab(ttk.Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
 
+    def create_widgets(self):
+        pass
 
+    def get_data(self, in_frame, _out_frame):
+        pass
 
+    def analyze(self):
+        pass
+
+class DropFolderFrame(ttk.Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
+
+    def create(self):
+        pass
+
+    def get_path(self, event):
+        pass
+
+    def select_button_click(self):
+        pass
+
+    def return_data(self):
+        pass
+
+class MyStringVar(tk.StringVar):
+    def __init__(self):
+        super().__init__()
+
+    def set(self, path):
+        super().set()
+
+    def set_params(self, frame=None, file_list=None):
+        self.frame = frame
+        self.file_list = file_list
+
+    def up_frame(self):
+        pass
+
+    def set_list(self, path_list):
+        pass
 
 if __name__ == '__main__':
-    disp()
+    main()
