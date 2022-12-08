@@ -8,9 +8,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import time
-
+from numpy import pi, cos, sin, sqrt
+from PIL import Image
+import glob
+import os
+import tempfile
 
 def main():
+    gif()
+
+def gif():
+    with tempfile.TemporaryDirectory(prefix='tmp_', dir='.') as temp:
+        print('hajimari', os.curdir)
+        print('temp', temp)
+        for i in range(10):
+            if i%2 == 0:
+                image = cv2.imread('1.png')
+                cv2.imwrite(temp + '/' + str(i) + '.png', image)
+            else:
+                image = cv2.imread('arrow.png')
+                cv2.imwrite(temp + '/' + str(i) + '.png', image)
+        files = sorted(glob.glob(temp + '/*.png'))
+        images = list(map(lambda file: Image.open(file), files))
+        images[0].save('gattai.gif', save_all=True, append_images=images[1:], duration=500, loop=0)
+    print('owari', os.curdir)
+    
+def check_convert():
     # delete_alpha()
     print('cv2')
     start = time.time()

@@ -1,26 +1,27 @@
-import datetime
 import glob
 import os
 import sys
 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
-import plotly
 from matplotlib import colors
 import itertools
+import tempfile
+from PIL import Image
+
 
 EXTENSIONS = (".jpeg", ".jpg", ".png", ".webp")
 
 def main():
-    path = get_image_abspath('./1.png')
+    args = sys.argv
+    reult
+    path = get_image_abspath()
     cut_image = detect_white_background(path)
     bgr, hsv = remove_invisible(image_bgra=cut_image)
-    # bgr_histogram = draw_histogram(bgr, 'green', type='BGR', result_path='C:/Users/Kento Terada/VSwork/image_analysis/code/test')
-    # hsv_histogram = draw_histogram(hsv, 'green', type='HSV')
-    sctter3d = draw_3dplot(bgr, 'green', 'BGR')
+    bgr_histogram = draw_histogram(bgr, type='BGR')
+    hsv_histogram = draw_histogram(hsv, type='HSV')
+    sctter3d = draw_scatter3d(bgr, 'green', 'BGR')
 
 def get_image_abspath(path):
     if os.path.isfile(path):
@@ -90,7 +91,7 @@ def remove_invisible(image_path=None, image_bgra=None):
     else:
         return array_bgra[array_bgra[:,3] > 0], array_hsv[array_bgra[:,3] > 0]    # Remove pixel, of which alpha = 0.
 
-def draw_histogram(array_color, filename, type, result_path=None):
+def draw_histogram(array_color, type):
     # Graph settings.
     bgr_colors = ('blue', 'green', 'red')    # BGR marker color.
     bgr_labels = ('Blue', 'Green', 'Red')    # BGR label name.
@@ -113,10 +114,13 @@ def draw_histogram(array_color, filename, type, result_path=None):
         figure.update_layout(
             title=type + ' histogram'
         )
+
+    return figure
     
-    # Save
-    name = filename + '_' + type + 'Hist.html'
-    def save(dir):
+    
+def save_histogram(figure, filename, type, result_path=None):
+    def save():
+        name = filename + '_' + type + 'Hist.html'
         # When already file exists, save as new name.
         if os.path.exists(dir + '/' + name):
             print('exist')
@@ -129,27 +133,36 @@ def draw_histogram(array_color, filename, type, result_path=None):
         else:    # Not exist.
             print('not exist')
             figure.write_html(dir + '/' + name)
-    if result_path == None:
+
+    if result_path == None:    # Save at current directry.
         save('.')
     else:
         print('result path is ', result_path)
         save(result_path)
-    return figure
+    
         
-def draw_3dplot(array_color, filename, type, result_path=None):
+def draw_scatter3d(array_color, type):
+    # Transform bgr, if format is bgra.
     pixel_colors = array_color[:,:3]
+    # Split B, G, R or H, S, V.
+    x, y, z = pixel_colors[:,0], pixel_colors[:,1], pixel_colors[:,2]
+
+    # Set format BGR or HSV.
+    if type == 'BGR':
+        labels = ['Blue', 'Green', 'Red']
+        # Transform BGR to RGB.
+        array_pixels = pixel_colors[:, [2,1,0]]
+    elif type == 'HSV':
+        labels = ['Hue', 'Saturation', 'Value']
+
     normal = colors.Normalize(vmin=0., vmax=255.)
-
-    b, g, r = pixel_colors[:,0], pixel_colors[:,1], pixel_colors[:,2]
-    array_pixels = pixel_colors[:, [2,1,0]]
-
     array_pixels = normal(array_pixels).tolist()
 
     figure = go.Figure(
         data=[go.Scatter3d(
-            x=b,
-            y=g,
-            z=r,
+            x=x,
+            y=y,
+            z=z,
             mode='markers',
             marker=dict(
                 size=0.5,
@@ -157,56 +170,45 @@ def draw_3dplot(array_color, filename, type, result_path=None):
                 )
             )]
         )
-    
-    # -------------------------------------
-    t = np.linspace(0, 10, 50)
-    x, y, z = np.cos(t), np.sin(t), t
-    x_eye = -1.25
-    y_eye = 2
-    z_eye = 0.5
-    # ----------------------------------
 
     figure.update_layout(
         title='RGB 3D plot',
         scene=dict(
-            xaxis=dict(title='Blue', range=(0,255)),
-            yaxis=dict(title='Green', range=(0,255)),
-            zaxis=dict(title='Red', range=(0,255))
-        ),
-        scene_camera_eye=dict(x=x_eye,y=y_eye,z=z_eye),
-        # ----------------------------------
-        updatemenus=[dict(
-            type='buttons',
-            showactive=False,
-            y=1,
-            x=0.8,
-            xanchor='left',
-            yanchor='bottom',
-            pad=dict(t=45, r=10),
-            buttons=[dict(
-                label='play',
-                method='animate',
-                args=[None,dict(
-                    frame=dict(duration=5,redraw=True),
-                    transition=dict(duration=0),
-                    fromcurrent=True,
-                    mode='immediate'
-                )]
-            )])]
-    )
-
-    def rotate_z(x,y,z,theta):
-        w = x + 1j*y
-        return np.real(np.exp(1j*theta)*w), np.imag(np.exp(1j*theta)*w), z
-
-    frames = []
-    for t in np.arange(0, 6.26, 0.1):
-        xe, ye, ze = rotate_z(x_eye, y_eye, z_eye, -t)
-        frames.append(go.Frame(layout=dict(scene_camera_eye=dict(x=xe, y=ye, z=ze))))
-    figure.frames=frames
-    figure.show()
+            xaxis=dict(title=labels[0], range=(0,255)),
+            yaxis=dict(title=labels[1], range=(0,255)),
+            zaxis=dict(title=labels[1], range=(0,255))
+        ))
+        
     return figure
-    
+
+def save_scatter3d(figure: go.Figure, filename: str, type: str ,result_path=None):
+    def rotate_z(x, y, z, theta):
+        # 1j = i (complex number).
+        # Transform x-y to complex plane (e.g. A(1, root3) -> A = 2{sin(pi/3) + isin(pi/3)} = 1 + root3i ))
+        w = x + 1j * y
+        
+        # np.exp(1j * theta) = e^(i*theta) = cos(theta) + isin(theta).
+        # z = r{cos(phi) + isin(phi)}, w = cos(theta) + isin(theta) => zw = r{cos(phi + theta) + isin(phi + theta)}
+        return np.real(np.exp(1j * theta) * w), np.imag(np.exp(1j * theta) * w), z
+
+    # Camera position.
+    x_eye = -1.25
+    y_eye = 2
+    z_eye = 0.5
+
+    if result_path == None:
+        result_path = '.'
+
+    # Save each angle image in temprary directory, and combine to gif.
+    with tempfile.TemporaryDirectory(suffix='temp_', dir='.') as temp:
+        for i, theta in enumerate(np.arange(0, 2*np.pi, 0.1)):
+            x_rotate, y_rotate, z_rotate = rotate_z(x_eye, y_eye, z_eye, -theta)
+            figure.update_layout(scene_camera_eye=dict(x=x_rotate, y=y_rotate, z=z_rotate))
+            figure.write_image(temp + '/' + str(i) + '.png')
+
+        files = sorted(glob.glob(temp + '/*.png'))
+        images = list(map(lambda file: Image.open(file) , files))
+        images[0].save(temp + '/' + filename + '_scatter3D.gif', save_all = True, append_images=images[1:], duration=500, loop=0)
 
 if __name__ == '__main__':
     main()
