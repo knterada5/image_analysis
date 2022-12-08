@@ -8,19 +8,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly
 from matplotlib import colors
 import itertools
 
-EXTENSIONS = (".jpeg", ".jpg", ".png")
+EXTENSIONS = (".jpeg", ".jpg", ".png", ".webp")
 
 def main():
-    path = get_image_abspath('./green.jpg')
+    path = get_image_abspath('./1.png')
     cut_image = detect_white_background(path)
     bgr, hsv = remove_invisible(image_bgra=cut_image)
-    print(bgr.shape)
-    print(hsv.shape)
-    draw_histogram(bgr, 'green', type='BGR', result_path='C:/Users/Kento Terada/VSwork/image_analysis/code/test')
-    draw_histogram(hsv, 'green', type='HSV')
+    # bgr_histogram = draw_histogram(bgr, 'green', type='BGR', result_path='C:/Users/Kento Terada/VSwork/image_analysis/code/test')
+    # hsv_histogram = draw_histogram(hsv, 'green', type='HSV')
+    sctter3d = draw_3dplot(bgr, 'green', 'BGR')
 
 def get_image_abspath(path):
     if os.path.isfile(path):
@@ -44,7 +44,9 @@ def get_image_abspath(path):
             return abspath_list
 
 def detect_white_background(image_path):
-    image = cv2.imread(image_path)
+    image_raw = cv2.imread(image_path)
+    scale = 500 / image_raw.shape[1]
+    image = cv2.resize(image_raw, dsize=None, fx=scale, fy=scale)
     image_bgra = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
     image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -108,7 +110,9 @@ def draw_histogram(array_color, filename, type, result_path=None):
         hists, bins = np.histogram(array_color[:,i], np.arange(256 + 1))    # bins: every 1 in the range from 0 to 256 to prevent come togehter hist of 254 and 255.
         hists = np.append(hists, 0)    # At bin = 256, bgr = 0
         figure.add_trace(go.Scatter(x=bins, y=hists, name=label, marker_color=color))
-    figure.show()
+        figure.update_layout(
+            title=type + ' histogram'
+        )
     
     # Save
     name = filename + '_' + type + 'Hist.html'
@@ -130,6 +134,7 @@ def draw_histogram(array_color, filename, type, result_path=None):
     else:
         print('result path is ', result_path)
         save(result_path)
+    return figure
         
 def draw_3dplot(array_color, filename, type, result_path=None):
     pixel_colors = array_color[:,:3]
@@ -139,6 +144,69 @@ def draw_3dplot(array_color, filename, type, result_path=None):
     array_pixels = pixel_colors[:, [2,1,0]]
 
     array_pixels = normal(array_pixels).tolist()
+
+    figure = go.Figure(
+        data=[go.Scatter3d(
+            x=b,
+            y=g,
+            z=r,
+            mode='markers',
+            marker=dict(
+                size=0.5,
+                color=array_pixels
+                )
+            )]
+        )
     
+    # -------------------------------------
+    t = np.linspace(0, 10, 50)
+    x, y, z = np.cos(t), np.sin(t), t
+    x_eye = -1.25
+    y_eye = 2
+    z_eye = 0.5
+    # ----------------------------------
+
+    figure.update_layout(
+        title='RGB 3D plot',
+        scene=dict(
+            xaxis=dict(title='Blue', range=(0,255)),
+            yaxis=dict(title='Green', range=(0,255)),
+            zaxis=dict(title='Red', range=(0,255))
+        ),
+        scene_camera_eye=dict(x=x_eye,y=y_eye,z=z_eye),
+        # ----------------------------------
+        updatemenus=[dict(
+            type='buttons',
+            showactive=False,
+            y=1,
+            x=0.8,
+            xanchor='left',
+            yanchor='bottom',
+            pad=dict(t=45, r=10),
+            buttons=[dict(
+                label='play',
+                method='animate',
+                args=[None,dict(
+                    frame=dict(duration=5,redraw=True),
+                    transition=dict(duration=0),
+                    fromcurrent=True,
+                    mode='immediate'
+                )]
+            )])]
+    )
+
+    def rotate_z(x,y,z,theta):
+        w = x + 1j*y
+        return np.real(np.exp(1j*theta)*w), np.imag(np.exp(1j*theta)*w), z
+
+    frames = []
+    for t in np.arange(0, 6.26, 0.1):
+        xe, ye, ze = rotate_z(x_eye, y_eye, z_eye, -t)
+        frames.append(go.Frame(layout=dict(scene_camera_eye=dict(x=xe, y=ye, z=ze))))
+    figure.frames=frames
+    figure.show()
+    return figure
+    
+
 if __name__ == '__main__':
     main()
