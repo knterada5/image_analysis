@@ -15,7 +15,47 @@ import os
 import tempfile
 
 def main():
-    gif()
+    print('start')
+    repe()
+    
+def send_progress(total, now):
+        print('send_prgoress')
+        # print('total is', len(list(now)))
+        for i in now:
+            print(i)
+        print('send prg finsih')
+
+def send():
+    for i in range(5):
+        print('repeat', i)
+        yield i
+
+class Progress():
+    def __init__(self, total):
+        self.total = total
+        self.progress = 0
+
+    def set_new(self, new):
+        self.progress = new
+        self.update()
+
+    def update():
+        
+
+def repe():
+    print('start repeat')
+    send_progress(5, send())
+    print('finish')
+
+def catch():
+    print('catch')
+
+def repeat():
+    print('repeat')
+    for i in range(5):
+        print('repeat', i)
+        yield i
+
 
 def gif():
     with tempfile.TemporaryDirectory(prefix='tmp_', dir='.') as temp:

@@ -9,13 +9,59 @@ from matplotlib import colors
 import itertools
 import tempfile
 from PIL import Image
+from tqdm import tqdm
 
 
 EXTENSIONS = (".jpeg", ".jpg", ".png", ".webp")
 
+class DrawGraphSubject():
+    def __init__(self):
+        self.__observers = []
+        self.__process = []
+
+    def add_observer(self, observer):
+        '''Add self to observer list.'''
+        self.__observers.append(observer)
+
+    def remove_observer(self, observer):
+        '''Remove self from observer list.'''
+        self.__observers.remove(observer)
+
+    def notify_message(self):
+        '''Notify message to observers.'''
+        for observer in self.__observers:
+            observer.update_message(self)
+
+    def set_message(self, message):
+        '''Set latest message.'''
+        print(message)
+        self.message = message
+        self.set_message()
+        self.notify_message()
+
+    def notify_process(self):
+        '''Notify latest process to observers.'''
+        for observer in self.__observers:
+            observer.update_process(self)
+
+    def start_process(self, process):
+        '''Start process and add to process list.'''
+        self.__process.append(process)
+
+    def end_process(self, process):
+        '''End process and remove from process list.'''
+        index = list(map(lambda x: x.name, self.__process)).index(process.name)
+        del self.__process[index]
+        self.notify_process()
+
+    def set_process(self, process, now):
+        '''Set latest process.'''
+        now_process = process.set_now(now)
+        index = list(map(lambda x: x.name, self.__process)).index(process.name)
+        self.__process[index] = now_process
+
 def main():
     args = sys.argv
-    reult
     path = get_image_abspath()
     cut_image = detect_white_background(path)
     bgr, hsv = remove_invisible(image_bgra=cut_image)
@@ -117,7 +163,6 @@ def draw_histogram(array_color, type):
 
     return figure
     
-    
 def save_histogram(figure, filename, type, result_path=None):
     def save():
         name = filename + '_' + type + 'Hist.html'
@@ -139,7 +184,6 @@ def save_histogram(figure, filename, type, result_path=None):
     else:
         print('result path is ', result_path)
         save(result_path)
-    
         
 def draw_scatter3d(array_color, type):
     # Transform bgr, if format is bgra.
@@ -200,7 +244,7 @@ def save_scatter3d(figure: go.Figure, filename: str, type: str ,result_path=None
         result_path = '.'
 
     # Save each angle image in temprary directory, and combine to gif.
-    with tempfile.TemporaryDirectory(suffix='temp_', dir='.') as temp:
+    with tempfile.TemporaryDirectory(prefix='temp_', dir='.') as temp:
         for i, theta in enumerate(np.arange(0, 2*np.pi, 0.1)):
             x_rotate, y_rotate, z_rotate = rotate_z(x_eye, y_eye, z_eye, -theta)
             figure.update_layout(scene_camera_eye=dict(x=x_rotate, y=y_rotate, z=z_rotate))
@@ -208,7 +252,7 @@ def save_scatter3d(figure: go.Figure, filename: str, type: str ,result_path=None
 
         files = sorted(glob.glob(temp + '/*.png'))
         images = list(map(lambda file: Image.open(file) , files))
-        images[0].save(temp + '/' + filename + '_scatter3D.gif', save_all = True, append_images=images[1:], duration=500, loop=0)
+        images[0].save(result_path + '/' + filename + '_scatter3D.gif', save_all = True, append_images=images[1:], duration=500, loop=0)
 
 if __name__ == '__main__':
     main()

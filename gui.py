@@ -27,6 +27,9 @@ class Application(ttk.Frame):
     def create_tabs(self):
         pass
 
+    def update(self, subject):
+        print(subject.message())
+
 class HistogramTab(ttk.Frame):
     def __init__(self, master=None):
         super().__init__(master)

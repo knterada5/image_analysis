@@ -11,6 +11,13 @@ import glob
 import re
 import color_histgram
 
+def main():
+    root = dnd2.Tk()
+    root.geometry('400x200')
+    root.title('Image analysis')
+    Application(root)
+    root.mainloop()
+
 class Application(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
@@ -33,12 +40,16 @@ class HistogramTab(tk.Frame):
         self.create_widgets()
     
     def create_widgets(self):
+        '''Create widgets. Input frame.
+        '''
         
+        # Input area.
         input_frame = ttk.Frame(self, width=100)
         input_frame.pack_propagate(0)
         input_frame.pack(side='left', expand=True, fill='both')
         frame1 = DropFolderFrame(input_frame)
 
+        # Run button.
         enter_frame = ttk.Frame(self, width=10)
         enter_frame.pack_propagate(0)
         enter_frame.pack(side='left',expand=True,fill='both')
@@ -48,12 +59,11 @@ class HistogramTab(tk.Frame):
         enter_button = ttk.Button(enter_frame, image=self.image,command=lambda: self.getitems(frame1, frame2))
         enter_button.pack(expand=True)
 
+        # Output area.
         output_frame = ttk.Frame(self, width=100)
         output_frame.pack_propagate(0)
         output_frame.pack(side='left', expand=True, fill='both')
         frame2 = DropFolderFrame(output_frame)
-    
-        
 
     def getitems(self, frame, frame2):
         file_list, listbox = frame.return_data()
@@ -83,9 +93,10 @@ class HistogramTab(tk.Frame):
         print(image_files)
 
 
-
-
 class DropFolderFrame(tk.Frame):
+    '''This frame can get dropped file path.
+    
+    '''
     
     # path = None
     drop_path = None
@@ -127,17 +138,17 @@ class DropFolderFrame(tk.Frame):
 
         list_style = ttk.Style()
         list_style.configure('list.TFrame',background='red')
-        list_frame = ttk.Frame(switch_frame,style='list.TFrame')
-        list_frame.grid_propagate(0)
-        list_frame.grid(row=0,column=0, sticky=tk.NSEW)
+        self.list_frame = ttk.Frame(switch_frame,style='list.TFrame')
+        self.list_frame.grid_propagate(0)
+        self.list_frame.grid(row=0,column=0, sticky=tk.NSEW)
         
-        self.listbox = tk.Listbox(list_frame, selectmode='multiple', listvariable=self.file_list)
+        self.listbox = tk.Listbox(self.list_frame, selectmode='multiple', listvariable=self.file_list)
         self.listbox.pack(side='left',expand=True,fill='both')
-        scrollbar = ttk.Scrollbar(list_frame, orient='vertical',command=self.listbox.yview)
+        scrollbar = ttk.Scrollbar(self.list_frame, orient='vertical',command=self.listbox.yview)
         self.listbox['yscrollcommand'] = scrollbar.set
         scrollbar.pack(side='right',fill='y')
 
-        self.drop_path.set_params(list_frame, self.file_list)
+        # self.drop_path.set_params(self.list_frame, self.file_list)
         drop_frame = ttk.Frame(switch_frame, style='drop.TFrame', relief=tk.RIDGE, borderwidth=2)
         
         drop_frame.grid_propagate(0)
@@ -152,6 +163,7 @@ class DropFolderFrame(tk.Frame):
     def get_path(self, event):
         pattern = '\{.*?\}'
         path_list = re.findall(pattern, event.data)
+        print('get path kore desu!!!', path_list)
         path_list = list(map(lambda x: x[1:-1], path_list))
         
         
@@ -167,6 +179,8 @@ class DropFolderFrame(tk.Frame):
 
         # self.path = list(map(file_or_folder, path_list))
         self.drop_path.set(path_list)
+        self.list_frame.tkraise()
+        self.file_list.set(self.drop_path.file_list)
 
     def select_folder(self):
         path = filedialog.askdirectory()
@@ -194,7 +208,7 @@ class MyStringVar(tk.StringVar):
         directory = list(map(get_dir, event))
         super().set(",".join(directory))
         # super().set(event.split('/')[-1])
-        self.up()
+        # self.up()
         self.set_list(event)
 
     def set_params(self, frame, list):
@@ -222,26 +236,18 @@ class MyStringVar(tk.StringVar):
             else:
                 pass
         
-        file_list = []
+        self.file_list = []
         for path in path_list:
             if os.path.isfile(path):
                 data = get_name(path)
-                file_list.extend([data])
+                self.file_list.extend([data])
             else:
                 files = glob.glob(path + "/*")
                 data = map(get_name, files)
                 data = filter(None, data)
                 data = list(data)
-                file_list.extend(data)
-        self.list.set(file_list)
-
-
-def main():
-    root = dnd2.Tk()
-    root.geometry('400x200')
-    root.title('Image analysis')
-    Application(root)
-    root.mainloop()
+                self.file_list.extend(data)
+        # self.list.set(file_list)
 
 if __name__ == '__main__':
     main()
