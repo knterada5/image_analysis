@@ -141,7 +141,7 @@ class DrawGraph(base.BasePublisher):
         
     def save_histogram(self, figure, filename, type, result_path=None):
         
-        def save():
+        def save(dir):
             name = filename + '_' + type + 'Hist.html'
             # When already file exists, save as new name.
             if os.path.exists(dir + '/' + name):
@@ -226,15 +226,17 @@ class DrawGraph(base.BasePublisher):
 
         # Save each angle image in temprary directory, and combine to gif.
         with tempfile.TemporaryDirectory(prefix='temp_', dir='.') as temp:
-            self.start_process('rotate',len(np.arange(0, 2*np.pi, 0.1)))
-            for i, theta in enumerate(np.arange(0, 2*np.pi, 0.1)):
-                self.set_process('rotate', i + 1)
-                print(i + 1)
+            angles = np.arange(0,2*np.pi, 0.1)
+            self.start_process('Rotating...',len(angles))
+            for i, theta in enumerate(angles):
+                no = str(i).zfill(3)
+                
+                self.set_process('Rotating...', i + 1)
                 x_rotate, y_rotate, z_rotate = rotate_z(x_eye, y_eye, z_eye, -theta)
                 figure.update_layout(scene_camera_eye=dict(x=x_rotate, y=y_rotate, z=z_rotate))
-                figure.write_image(temp + '/' + str(i) + '.png')
+                figure.write_image(temp + '/' + no + '.png',scale=10)
 
-            self.end_process('angle')
+            self.end_process('Rotating...')
             files = sorted(glob.glob(temp + '/*.png'))
             images = list(map(lambda file: Image.open(file) , files))
             images[0].save(result_path + '/' + filename + '_scatter3D.gif', save_all = True, append_images=images[1:], duration=500, loop=0)

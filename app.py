@@ -180,13 +180,18 @@ class DrawGraphTab(base.BaseObserver):
         def analyse():
             d = DrawGraph(self)
             try:
-                path =d.get_image_abspath('./1.png')
+                path =d.get_image_abspath('./1.JPG')
                 bgra = d.detect_white_background(path)
                 bgr,hsv=d.remove_invisible(image_bgra=bgra)
+                bgr_fig = d.draw_histogram(bgr,'BGR')
+                d.save_histogram(bgr_fig, 'test','BGR',result_path='kuma')
+                hsv_fig = d.draw_histogram(hsv,'HSV')
+                d.save_histogram(hsv_fig,'test','HSV',result_path='kuma')
                 fig =d.draw_scatter3d(bgr,'BGR')
-                d.save_scatter3d(fig,'test','BGR')
+                d.save_scatter3d(fig,'test','BGR',result_path='kuma')
             except Exception as e:
                 self.var.set_message('  '+str(e))
+                print(e)
             
         thread1 = threading.Thread(target=analyse)
         thread1.start()
