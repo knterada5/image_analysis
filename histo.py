@@ -30,11 +30,12 @@ class DrawGraph(base.BasePublisher):
         '''
         # Image file extensions.
         EXTENSIONS = (".jpeg", ".jpg", ".png", ".webp")
-        self.set_message('Get image file path.')
+        self.set_message('Getting image file path...')
         if os.path.exists(path):
             pass
         else:
-            raise Exception(path + ' is not exist.')
+            name = os.path.basename(path)
+            raise Exception(name + ' is not exist.')
         if os.path.isfile(path):
             print('file')
             # Image file or not.
@@ -42,7 +43,8 @@ class DrawGraph(base.BasePublisher):
                 abspath = os.path.abspath(path)
                 return abspath
             else:
-                raise Exception(path + ' is not image file.')
+                name = os.path.basename(path)
+                raise Exception(name + ' is not image file.')
         # Get path list of image file in selected folder.
         else:
             print('folder')
@@ -50,7 +52,8 @@ class DrawGraph(base.BasePublisher):
             for ext in EXTENSIONS:
                 path_list.append(glob.glob(path + '/*' + ext))
             if path_list == []:
-                raise Exception(path,'has no image file.')
+                name = os.path.basename(path)
+                raise Exception(name,'has no image file.')
             else:
                 abspath_list = []
                 for path in path_list:
@@ -81,6 +84,7 @@ class DrawGraph(base.BasePublisher):
         cv2.drawContours(mask, contours, contourIdx=-1, color=255, thickness=-1)    # contourIdx=-1: Select all contours. thickness=-1: Fill contours.
 
         # Erase background using mask which is not background area.
+        print('finish')
         return cv2.bitwise_and(image_bgra, image_bgra, mask=mask)
 
     def remove_invisible(self, image_path=None, image_bgra=None):
@@ -102,8 +106,10 @@ class DrawGraph(base.BasePublisher):
         # When all pixel alpha = 0 (when BGRA but BGR PNG), set all alpha = 255.
         if sum(x > 0 for x in array_bgra[:,3]) == 0:
             array_bgra[:,3] = 255
+            print('finish')
             return array_bgra, array_hsv
         else:
+            print('finish')
             return array_bgra[array_bgra[:,3] > 0], array_hsv[array_bgra[:,3] > 0]    # Remove pixel, of which alpha = 0.
 
     def draw_histogram(self, array_color, type):
@@ -200,6 +206,7 @@ class DrawGraph(base.BasePublisher):
         return figure
 
     def save_scatter3d(self, figure: go.Figure, filename: str, type: str ,result_path=None):
+        self.set_message('Save scatter 3D graph.')
         def rotate_z(x, y, z, theta):
             # 1j = i (complex number).
             # Transform x-y to complex plane (e.g. A(1, root3) -> A = 2{sin(pi/3) + isin(pi/3)} = 1 + root3i ))

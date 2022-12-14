@@ -10,6 +10,8 @@ import glob
 import tkinter.filedialog as filedialog
 import histo
 import tkinter.font as font
+import time
+import threading
 
 def main():
     app = Application()
@@ -21,7 +23,7 @@ class Application():
     def main(self):
         '''Create window and set widgets.'''
         root = dnd2.Tk()
-        root.geometry('400x400')
+        root.geometry('500x500')
         root.title('Image analysis')
         MainFrame(root)
         root.mainloop()
@@ -51,18 +53,20 @@ class DrawGraphTab(base.BaseObserver):
 
     def update_message(self, message):
         '''Catch message from DrawGraph class.'''
-        self.message = message
-        print('catch', self.message)
+        # self.message = message
+        print('update messgae')
+        self.var.set_message(message)
 
     def update_process(self, process):
         '''Catch process of DrawGraph class.'''
-        pass
+        print('update progress')
+        self.var.set_progress(process)
 
     def create_widgets(self):
         '''Create widgets, input area, console area, result area and run button.'''
 
         # Font
-        f = font.Font(self.frame, family='Meiryo', size=15)
+        f = font.Font(self.frame, family='MS gothic', size=10)
         s = ttk.Style()
         s.configure('font.TCheckbutton', font=f)
         # Input area.
@@ -84,7 +88,7 @@ class DrawGraphTab(base.BaseObserver):
         select_frame.pack(expand=True, fill='both')
         
         # Preproccessing area.
-        pre_proc_frame = ttk.LabelFrame(select_frame, text='前処理')
+        pre_proc_frame = ttk.LabelFrame(select_frame, text='\033[33m前処理')
         pre_proc_frame.pack(fill='x', pady=(0,5))
         self.pre_var1 = tk.BooleanVar(value=True)
         self.remove_back = ttk.Checkbutton(pre_proc_frame, text='背景除去abcd', variable=self.pre_var1,style='font.TCheckbutton')
@@ -95,15 +99,15 @@ class DrawGraphTab(base.BaseObserver):
         graph_frame.pack(fill='x')
         # Histogram area.
         self.histo_var1 = tk.BooleanVar(value=True)
-        self.histo_btn1 = ttk.Checkbutton(graph_frame, text='ヒストグラム', variable=self.histo_var1, command=lambda : self.disable_all('histo'))
+        self.histo_btn1 = ttk.Checkbutton(graph_frame, text='ヒストグラム', variable=self.histo_var1, command=lambda : self.disable_all('histo'),style='font.TCheckbutton')
         self.histo_btn1.pack(fill='x')
         histo_frame = ttk.Frame(graph_frame)
         histo_frame.pack(fill='x', pady=(0,10))
         self.histo_var2 = tk.BooleanVar(value=True)
-        self.histo_btn2 = ttk.Checkbutton(histo_frame, text='BGR', variable=self.histo_var2, command=lambda:self.both_off('histo'))
+        self.histo_btn2 = ttk.Checkbutton(histo_frame, text='BGR', variable=self.histo_var2, command=lambda:self.both_off('histo'),style='font.TCheckbutton')
         self.histo_btn2.pack(side='left',padx=10)
         self.histo_var3 = tk.BooleanVar(value=True)
-        self.histo_btn3 = ttk.Checkbutton(histo_frame, text='HSV', variable=self.histo_var3, command=lambda:self.both_off('histo'))
+        self.histo_btn3 = ttk.Checkbutton(histo_frame, text='HSV', variable=self.histo_var3, command=lambda:self.both_off('histo'),style='font.TCheckbutton')
         self.histo_btn3.pack(side='left', padx=10)
     
         # Scatter 3D area.
@@ -125,9 +129,15 @@ class DrawGraphTab(base.BaseObserver):
         console_fram = ttk.Frame(right_frame, height=50, style='cons.TFrame')
         console_fram.pack_propagate(0)
         console_fram.pack(expand=True, fill='both')
+        txt_style = ttk.Style()
+        txt_style.configure('txt.TLabel', font=f)
+        self.var = ConsoleStringVar()
+        txt = ttk.Label(console_fram,textvariable=self.var,anchor='w',style='txt.TLabel')
+        txt.pack(fill='x')
 
         button = ttk.Button(self.frame, text='RUN', command=self.run)
         button.pack(side='left')
+        
     
     def disable_all(self, graph):
         if graph == 'histo':
@@ -165,9 +175,22 @@ class DrawGraphTab(base.BaseObserver):
             v1.set(False)
         elif (v2.get() or v3.get()) and not v1.get():
             v1.set(True)
-
+    
     def run(self):
-        pass
+        def analyse():
+            d = DrawGraph(self)
+            try:
+                path =d.get_image_abspath('./1.png')
+                bgra = d.detect_white_background(path)
+                bgr,hsv=d.remove_invisible(image_bgra=bgra)
+                fig =d.draw_scatter3d(bgr,'BGR')
+                d.save_scatter3d(fig,'test','BGR')
+            except Exception as e:
+                self.var.set_message('  '+str(e))
+            
+        thread1 = threading.Thread(target=analyse)
+        thread1.start()
+
 
 
 class DropFolderFrame(ttk.Frame):
@@ -326,6 +349,50 @@ class FileNameStringVar(tk.StringVar):
             names = list(map(NameUtil.get_dir_and_name, files))
         print(names)
         super().set(names)
+
+class ConsoleStringVar(tk.StringVar):
+    def __init__(self):
+        super().__init__()
+        self.message = ''
+        self.progress = []
+        self.text = ''
+
+    # def set(self):
+    #     print('stringvar set')
+    #     self.text += self.message + '\n'
+    #     for prog in self.progress:
+    #         self.text += prog.name + '\n'
+    #         total = prog.total
+    #         print(prog.name, prog.total, prog.now)
+    #         now = prog.now
+    #         percent = int(now/total*100)
+    #         p = (3 -len(str(percent)))*' '+str(percent)
+    #         prog = '='*(percent//5 -1)+'>'+' '*(20-percent//5)
+    #         self.text += f'{p}% |{prog}|\n'
+    #     super().set(self.text)
+            
+    def set_message(self, message):
+
+        self.text += message+'\n'
+        super().set(self.text)
+
+    def set_progress(self, progress):
+        text =''
+        for prog in progress:
+            text += prog.name + '\n'
+            total = prog.total
+            print(prog.name, prog.total, prog.now)
+            now = prog.now
+            if now == 0:
+                text+='  0% |'+'.'*20+'|\n'
+            percent = int(now/total*100)
+            p = (3 -len(str(percent)))*' '+str(percent)
+            prog = '='*(percent//5 -1)+'>'+'.'*(20-percent//5)
+            if percent ==100:
+                text += f'{p}% |{prog}| Done.\n'
+            else:
+                text += f'{p}% |{prog}|\n'
+        super().set(self.text + text)
 
 class NameUtil():
     @staticmethod

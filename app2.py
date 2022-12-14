@@ -110,11 +110,7 @@ class DrawGraphTab(base.BaseObserver):
         button.pack(side='left')
     rem = True
     def run(self):
-        if self.rem:
-            self.remove_back.config(state='normal')
-        else:
-            self.remove_back.config(state='disabled')
-        self.rem = not self.rem
+        
 
 class DropFolderFrame(ttk.Frame):
     '''Drop folder area.'''
