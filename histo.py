@@ -30,7 +30,7 @@ class DrawGraph(base.BasePublisher):
         '''
         # Image file extensions.
         EXTENSIONS = (".jpeg", ".jpg", ".png", ".webp")
-        self.set_message('Getting image file path...')
+        self.add_message('getImg', 'Getting image file path...')
         if os.path.exists(path):
             pass
         else:
@@ -61,7 +61,19 @@ class DrawGraph(base.BasePublisher):
                 return abspath_list
 
     def detect_white_background(self, image_path):
-        self.set_message('Detect white background')
+        '''Detect white background and mask background
+        
+        Parameters
+        ----------
+        image_path : str
+            image path.
+            
+        Returns
+        ----------
+        bgra : np.array
+            Background alpha = 0.
+        '''
+        self.add_message('detect', 'Detect white background')
         image_raw = cv2.imread(image_path)
         scale = 500 / image_raw.shape[1]
         image = cv2.resize(image_raw, dsize=None, fx=scale, fy=scale)
@@ -88,7 +100,23 @@ class DrawGraph(base.BasePublisher):
         return cv2.bitwise_and(image_bgra, image_bgra, mask=mask)
 
     def remove_invisible(self, image_path=None, image_bgra=None):
-        self.set_message('Remove background area.')
+        '''Remove invisible pixel and transform to array.
+        
+        Parameters
+        ----------
+        image_path : str = None
+            Image path.
+        image_bgra : np.array = None
+            np.array of image.
+            
+        Returns
+        ----------
+        array_bgra : np.array
+            2D array, [B,G,R,A]
+        array_hsv : np.array
+            2D array, [H,S,V]
+        '''
+        self.add_message('remove','Remove background area.')
         # If image file type is PNG, read file as BGRA. Other type, read as BGR and convert to BGRA.
         if image_path != None:
             if image_path.lower().endswith('.png'):
@@ -113,7 +141,21 @@ class DrawGraph(base.BasePublisher):
             return array_bgra[array_bgra[:,3] > 0], array_hsv[array_bgra[:,3] > 0]    # Remove pixel, of which alpha = 0.
 
     def draw_histogram(self, array_color, type):
-        self.set_message('Draw histogram.')
+        '''Draw histogram.
+        
+        Parameters
+        ----------
+        array_color : np.array
+            2D array, bgr(a) or hsv
+        type : str
+            "BGR" or "HSV"
+        
+        Returns
+        ----------
+        figure :figure
+            Histogram figure, go.Figure
+        '''
+        self.add_message('histo','Draw histogram.')
         # Graph settings.
         bgr_colors = ('blue', 'green', 'red')    # BGR marker color.
         bgr_labels = ('Blue', 'Green', 'Red')    # BGR label name.
@@ -140,6 +182,23 @@ class DrawGraph(base.BasePublisher):
         return figure
         
     def save_histogram(self, figure, filename, type, result_path=None):
+        '''Save histogram.
+
+        Parameters
+        ----------
+        figure : figure
+            Histogram figure
+        filename : str
+            Saved file name. (e.g. filename=hoge, type="BGR" -> hoge_BGRHist.html)
+        type : str
+            "BGR" or "HSV".
+        result_path : str = None
+            Result path.
+            
+        Returns
+        ----------
+        None. Save html file.
+        '''
         
         def save(dir):
             name = filename + '_' + type + 'Hist.html'
@@ -158,14 +217,28 @@ class DrawGraph(base.BasePublisher):
 
         if result_path == None:    # Save at current directry.
             save('.')
-            self.set_message('Histogram is saved.')
+            self.add_message('histoSave','Histogram is saved.')
         else:
             print('result path is ', result_path)
             save(result_path)
-            self.set_message('Histogram is saved.')
+            self.add_message('histoSave','Histogram is saved.')
             
     def draw_scatter3d(self, array_color, type):
-        self.set_message('Draw scatter 3D.')
+        '''Draw scatter 3D.
+        
+        Parameters
+        ----------
+        array_color : np.array
+            2D array, bgr(a) or hsv.
+        type :str
+            "BGR" or "HSV".
+        
+        Returns
+        ----------
+        figure : figure
+            Scatter3D figure, go.Figure
+        '''
+        self.add_message('scat','Draw scatter 3D.')
         # Transform bgr, if format is bgra.
         pixel_colors = array_color[:,:3]
         # Split B, G, R or H, S, V.
@@ -178,6 +251,7 @@ class DrawGraph(base.BasePublisher):
             array_pixels = pixel_colors[:, [2,1,0]]
         elif type == 'HSV':
             labels = ['Hue', 'Saturation', 'Value']
+            array_pixels = pixel_colors
 
         normal = colors.Normalize(vmin=0., vmax=255.)
         array_pixels = normal(array_pixels).tolist()
@@ -206,7 +280,22 @@ class DrawGraph(base.BasePublisher):
         return figure
 
     def save_scatter3d(self, figure: go.Figure, filename: str, type: str ,result_path=None):
-        self.set_message('Save scatter 3D graph.')
+        '''Save scatter 3D figure.
+        
+        Parameters
+        ----------
+        figure : go.Figure
+        filename : str
+            Saved file name. (e.g. filename=hoge, type="BGR" -> hoge_scatter3D.gif)
+        type : str
+            "BGR" or "HSV".
+        result_path : str
+        
+        Returns
+        ----------
+        None. Save gif file.
+        '''
+        self.add_message('scatSave','Save scatter 3D graph.')
         def rotate_z(x, y, z, theta):
             # 1j = i (complex number).
             # Transform x-y to complex plane (e.g. A(1, root3) -> A = 2{sin(pi/3) + isin(pi/3)} = 1 + root3i ))
@@ -232,12 +321,12 @@ class DrawGraph(base.BasePublisher):
                 no = str(i).zfill(3)
                 
                 self.set_process('Rotating...', i + 1)
-                x_rotate, y_rotate, z_rotate = rotate_z(x_eye, y_eye, z_eye, -theta)
-                figure.update_layout(scene_camera_eye=dict(x=x_rotate, y=y_rotate, z=z_rotate))
-                figure.write_image(temp + '/' + no + '.png',scale=10)
+                # x_rotate, y_rotate, z_rotate = rotate_z(x_eye, y_eye, z_eye, -theta)
+                # figure.update_layout(scene_camera_eye=dict(x=x_rotate, y=y_rotate, z=z_rotate))
+                # figure.write_image(temp + '/' + no + '.png',scale=10)
 
             self.end_process('Rotating...')
-            files = sorted(glob.glob(temp + '/*.png'))
-            images = list(map(lambda file: Image.open(file) , files))
-            images[0].save(result_path + '/' + filename + '_scatter3D.gif', save_all = True, append_images=images[1:], duration=500, loop=0)
-            self.set_message('Scatter 3D is saved.')
+            # files = sorted(glob.glob(temp + '/*.png'))
+            # images = list(map(lambda file: Image.open(file) , files))
+            # images[0].save(result_path + '/' + filename + '_scatter3D.gif', save_all = True, append_images=images[1:], duration=500, loop=0)
+            self.set_message('scatSave','Scatter 3D is saved.')

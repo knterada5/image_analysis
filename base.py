@@ -10,52 +10,69 @@ class BasePublisher(metaclass=ABCMeta):
         List of observers. This class notify these observers.
         
     '''
-    def __init__(self, observer):
-        self.observers = []
-        self.process = []
-        self.add_observer(observer)
+    def __init__(self, observer=None):
+        self._observers = []
+        self._messages = []
+        self._process = []
+        if observer == None:
+            pass
+        else:
+            self.add_observer(observer)
 
     def add_observer(self, observer):
         '''Add self to observer list.'''
-        self.observers.append(observer)
+        self._observers.append(observer)
 
     def remove_observer(self, observer):
         '''Remove self from observer list.'''
-        self.observers.remove(observer)
+        self._observers.remove(observer)
 
     def notify_message(self):
         '''Notify message to observers.'''
-        for observer in self.observers:
-            observer.update_message(self.message)
+        for observer in self._observers:
+            observer.update_message(self._messages)
 
-    def set_message(self, message):
+    def add_message(self, title,message):
+        m = Message(title,message)
+        self._messages.append(m)
+        self.notify_message()
+
+    def remove_message(self, title):
+        indes = list(map(lambda x: x.title, self._messages)).index(title)
+        del self._messages[indes]
+        self.notify_message()
+
+    def set_message(self, tilte, message):
         '''Set latest message and notify change to observers.'''
-        print('base', message)
-        self.message = message
+        index = list(map(lambda x: x.title, self._messages)).index(tilte)
+        print(index)
+        print(message)
+        print(self._messages[index].message)
+        self._messages[index].update(message)
         self.notify_message()
 
     def notify_process(self):
         '''Notify latest process to observers.'''
-        for observer in self.observers:
-            observer.update_process(self.process)
+        for observer in self._observers:
+            observer.update_process(self._process)
 
     def start_process(self, name, total): 
         '''Start process and add to process list.'''
         process = Process(name, total)
-        self.process.append(process)
+        self._process.append(process)
         self.notify_process()
 
     def end_process(self, name):
         '''End process and remove from process list.'''
-        index = list(map(lambda x: x.name, self.process)).index(name)
-        del self.process[index]
+        index = list(map(lambda x: x.name, self._process)).index(name)
+        del self._process[index]
         self.notify_process()
-        self.set_message('Process' + name + ' is finish.')
+        # self.set_message('Process' + name + ' is finish.')
 
     def set_process(self, name, now):
         '''Set latest process.'''
-        index = list(map(lambda x: x.name, self.process)).index(name)
-        self.process[index].set_now(now)
+        index = list(map(lambda x: x.name, self._process)).index(name)
+        self._process[index].set_now(now)
         self.notify_process()
 
 
@@ -69,6 +86,24 @@ class BaseObserver(metaclass=ABCMeta):
     def update_process(self, process):
         pass
 
+class Message():
+    '''
+    Message class, contain title and message.
+    
+    Parameters
+    ----------
+    title : str
+        Message title.
+    message : str
+        Message.
+    '''
+
+    def __init__(self, title, message):
+        self.title = title
+        self.message = message
+
+    def update(self, message):
+        self.message = message
 
 class Process():
     '''

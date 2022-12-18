@@ -54,12 +54,11 @@ class DrawGraphTab(base.BaseObserver):
     def update_message(self, message):
         '''Catch message from DrawGraph class.'''
         # self.message = message
-        print('update messgae')
         self.var.set_message(message)
 
     def update_process(self, process):
         '''Catch process of DrawGraph class.'''
-        print('update progress')
+        # print('update progress')
         self.var.set_progress(process)
 
     def create_widgets(self):
@@ -80,24 +79,24 @@ class DrawGraphTab(base.BaseObserver):
         right_frame.pack_propagate(0)
         right_frame.pack(side='left', expand=True, fill='both')
 
-        # Select mode area.
+        # Select area.
         style = ttk.Style()
         style.configure('mode.TFrame', background='red')
         select_frame = ttk.Frame(right_frame, height=50, style='mode.TFrame')
         select_frame.pack_propagate(0)
         select_frame.pack(expand=True, fill='both')
         
-        # Preproccessing area.
-        pre_proc_frame = ttk.LabelFrame(select_frame, text='\033[33m前処理')
+        # Preproccessing mode.
+        pre_proc_frame = ttk.LabelFrame(select_frame, text='前処理')
         pre_proc_frame.pack(fill='x', pady=(0,5))
         self.pre_var1 = tk.BooleanVar(value=True)
-        self.remove_back = ttk.Checkbutton(pre_proc_frame, text='背景除去abcd', variable=self.pre_var1,style='font.TCheckbutton')
+        self.remove_back = ttk.Checkbutton(pre_proc_frame, text='背景除去', variable=self.pre_var1,style='font.TCheckbutton')
         self.remove_back.pack(fill='x')
 
-        # Graph area.
+        # Graph mode.
         graph_frame = ttk.LabelFrame(select_frame, text='グラフ')
         graph_frame.pack(fill='x')
-        # Histogram area.
+        # Histogram.
         self.histo_var1 = tk.BooleanVar(value=True)
         self.histo_btn1 = ttk.Checkbutton(graph_frame, text='ヒストグラム', variable=self.histo_var1, command=lambda : self.disable_all('histo'),style='font.TCheckbutton')
         self.histo_btn1.pack(fill='x')
@@ -177,23 +176,39 @@ class DrawGraphTab(base.BaseObserver):
             v1.set(True)
     
     def run(self):
-        def analyse():
+        def analyse(path):
             d = DrawGraph(self)
+            name = ".".join(os.path.basename(path).split('.')[:-1])
+            # self.var.set_message(name+ 'Start!')
             try:
-                path =d.get_image_abspath('./1.JPG')
-                bgra = d.detect_white_background(path)
-                bgr,hsv=d.remove_invisible(image_bgra=bgra)
-                bgr_fig = d.draw_histogram(bgr,'BGR')
-                d.save_histogram(bgr_fig, 'test','BGR',result_path='kuma')
-                hsv_fig = d.draw_histogram(hsv,'HSV')
-                d.save_histogram(hsv_fig,'test','HSV',result_path='kuma')
-                fig =d.draw_scatter3d(bgr,'BGR')
-                d.save_scatter3d(fig,'test','BGR',result_path='kuma')
+                if self.pre_var1.get():
+                    bgra = d.detect_white_background(path)
+                    array_bgra, array_hsv = d.remove_invisible(image_bgra=bgra)
+                else:
+                    array_bgra, array_hsv = d.remove_invisible(image_path=path)
+                if self.histo_var1.get():
+                    if self.histo_var2.get():
+                        figure_bgr = d.draw_histogram(array_bgra, 'BGR')
+                        d.save_histogram(figure_bgr, name, "BGR")
+                    if self.histo_var3.get():
+                        figure_hsv = d.draw_histogram(array_hsv, "HSV")
+                        d.save_histogram(figure_hsv, name, "HSV")
+                if self.scat_var1.get():
+                    if self.scat_var2.get():
+                        scat_bgr = d.draw_scatter3d(array_bgra, "BGR")
+                        d.save_scatter3d(scat_bgr, name, "BGR")
+                    if self.scat_var3.get():
+                        scat_hsv = d.draw_scatter3d(array_hsv, "HSV")
+                        d.save_scatter3d(scat_hsv, name, "HSV")
             except Exception as e:
-                self.var.set_message('  '+str(e))
+                # self.var.set_message('  '+str(e))
                 print(e)
-            
-        thread1 = threading.Thread(target=analyse)
+        def runrun():    
+            files_name, index = self.drop_folder_frame.return_list()
+            for ind in index:
+                analyse(files_name[ind])
+        
+        thread1 = threading.Thread(target=runrun)
         thread1.start()
 
 
@@ -356,37 +371,36 @@ class FileNameStringVar(tk.StringVar):
         super().set(names)
 
 class ConsoleStringVar(tk.StringVar):
+    '''Set text like console to tkinter stringvar.'''
     def __init__(self):
         super().__init__()
         self.message = ''
         self.progress = []
         self.text = ''
-
-    # def set(self):
-    #     print('stringvar set')
-    #     self.text += self.message + '\n'
-    #     for prog in self.progress:
-    #         self.text += prog.name + '\n'
-    #         total = prog.total
-    #         print(prog.name, prog.total, prog.now)
-    #         now = prog.now
-    #         percent = int(now/total*100)
-    #         p = (3 -len(str(percent)))*' '+str(percent)
-    #         prog = '='*(percent//5 -1)+'>'+' '*(20-percent//5)
-    #         self.text += f'{p}% |{prog}|\n'
-    #     super().set(self.text)
             
     def set_message(self, message):
-
-        self.text += message+'\n'
-        super().set(self.text)
+        '''Set message and new line.'''
+        print('app set message')
+        text = ''
+        for line in message:
+            print(line.message)
+            text += str(line.message) + '\n'
+        super().set(text)
+        self.text = text
 
     def set_progress(self, progress):
+        '''Set progress. Show progress bar.
+        
+        Parameters
+        ----------
+        progress : Progress
+            It has name, total, now.
+        '''
         text =''
         for prog in progress:
             text += prog.name + '\n'
             total = prog.total
-            print(prog.name, prog.total, prog.now)
+            # print(prog.name, prog.total, prog.now)
             now = prog.now
             if now == 0:
                 text+='  0% |'+'.'*20+'|\n'
