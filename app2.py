@@ -2,7 +2,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import tkinterdnd2 as dnd2
 from PIL import Image, ImageTk
-import base
+import base1
 from histo import DrawGraph
 import re
 import os
@@ -40,7 +40,7 @@ class MainFrame(ttk.Frame):
         notebook.pack(expand=True, fill='both')
         DrawGraphTab(notebook)
 
-class DrawGraphTab(base.BaseObserver):
+class DrawGraphTab(base1.BaseObserver):
     '''Draw graph tab class. Subscribe analysis process, recieve message and progress.'''
     def __init__(self, master):
         super().__init__()

@@ -2,12 +2,12 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import tkinterdnd2 as dnd2
 from PIL import Image, ImageTk
-import base
+import base1
 from histo import DrawGraph
 import re
 import os
 
-class Application(base.BaseObserver):
+class Application(base1.BaseObserver):
     '''Application class.
     
     Subscribe analysis process, recieve message and progress.
