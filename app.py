@@ -2,7 +2,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import tkinterdnd2 as dnd2
 from PIL import Image, ImageTk
-import base
+import base1
 from histo import DrawGraph
 import re
 import os
@@ -43,7 +43,7 @@ class MainFrame(ttk.Frame):
         notebook.pack(expand=True, fill='both')
         DrawGraphTab(notebook)
 
-class DrawGraphTab(base.BaseObserver):
+class DrawGraphTab(base1.BaseObserver):
     '''Draw graph tab class. Subscribe analysis process, recieve message and progress.'''
     def __init__(self, master):
         super().__init__()
@@ -236,11 +236,11 @@ class DropFolderFrame(ttk.Frame):
         entry_frame = ttk.Frame(self)
         entry_frame.pack(fill='x')
         # Entry textbox
-        entry_textbox = ttk.Entry(entry_frame, textvariable=self.dir_name)
-        entry_textbox.pack(side='left', expand=True, fill='x')
+        entry_textbox = ttk.Entry(entry_frame, textvariable=self.dir_name,width=0)
+        entry_textbox.pack(side='left',expand=True,fill='x')
         # Entry button
-        entry_button = ttk.Button(entry_frame, text='▼', command=self.select_folder)
-        entry_button.pack(side='right')
+        entry_button = ttk.Button(entry_frame, text='▼', command=self.select_folder,width=0)
+        entry_button.pack(side='left')
 
         # Base frame to switch.
         base_frame = ttk.Frame(self)

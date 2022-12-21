@@ -1,5 +1,5 @@
-import base
-from base import Process
+import base1
+from base1 import Process
 import glob
 import os
 import sys
@@ -12,7 +12,7 @@ import itertools
 import tempfile
 from PIL import Image
 
-class DrawGraph(base.BasePublisher):
+class DrawGraph(base1.BasePublisher):
 
     def get_image_abspath(self, path):
         '''Get image abspath
