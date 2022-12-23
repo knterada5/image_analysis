@@ -10,19 +10,27 @@ from matplotlib import colors
 import itertools
 import tempfile
 import threading
+from PIL import Image
+import sys
 
 def main():
-    def run():
-        d = DrawGraph()
-        try:
-            d.get_image_abspath('./3.png')
-        except Exception as e:
-            print(e)
-    # t1 = threading.Thread(target=run)
-    # t1.start()
-    run()
+    args = sys.argv
+    d = DrawGraph()
+    d.run(args[1])
 
 class DrawGraph(base.BasePublisher):
+
+    def run(self, file):
+        name = os.path.splitext(os.path.basename(file))[0]
+        path = self.get_image_abspath(file)
+        bgra = self.masking_background(path,name)
+        array_bgra, array_hsv = self.remove_invisible(image_bgra=bgra)
+        fig_bgr = self.draw_histogram(array_bgra, 'BGR')
+        fig_hsv = self.draw_histogram(array_hsv, 'HSV')
+        self.save_histogram(fig_bgr, name, 'BGR')
+        self.save_histogram(fig_hsv, name, 'HSV')
+        fig_3d = self.draw_scatter3d(array_bgra, 'BGR')
+        self.save_scatter3d(fig_3d, name, 'BGR')
 
     def get_image_abspath(self, path):
         '''Get image abspath
@@ -48,7 +56,6 @@ class DrawGraph(base.BasePublisher):
             # raise Exception(name + ' is not exist.')
             self.update_message('getPath', name + ' is not exist.')
             return
-        time.sleep(5)
         if os.path.isfile(path):
             # Image file or not.
             if path.lower().endswith(EXTENSIONS):
@@ -73,7 +80,7 @@ class DrawGraph(base.BasePublisher):
                 self.update_message('getPath','Getting image file path...Done.')
                 return abspath_list
 
-    def masking_background(self, image_path, resize=True):
+    def masking_background(self, image_path, name, resize=True):
         '''Detect white background and mask background
         
         Parameters
@@ -113,7 +120,9 @@ class DrawGraph(base.BasePublisher):
 
         # Erase background using mask which is not background area.
         self.update_message('mask','Masking background...Done.')
-        return cv2.bitwise_and(image_bgra, image_bgra, mask=mask)
+        img = cv2.bitwise_and(image_bgra, image_bgra, mask=mask)
+        cv2.imwrite(name + '_mask.jpg',img)
+        return img
 
     def remove_invisible(self, image_path=None, image_bgra=None):
         '''Remove invisible pixel and transform to array.
@@ -290,9 +299,10 @@ class DrawGraph(base.BasePublisher):
             scene=dict(
                 xaxis=dict(title=labels[0], range=(0,255)),
                 yaxis=dict(title=labels[1], range=(0,255)),
-                zaxis=dict(title=labels[1], range=(0,255))
+                zaxis=dict(title=labels[2], range=(0,255))
             ))
             
+        figure.show()
         return figure
 
     def save_scatter3d(self, figure: go.Figure, filename: str, type: str ,result_path=None):
@@ -336,16 +346,45 @@ class DrawGraph(base.BasePublisher):
             for i, theta in enumerate(angles):
                 no = str(i).zfill(3)
                 
-                self.set_process('Rotating...', i + 1)
-                # x_rotate, y_rotate, z_rotate = rotate_z(x_eye, y_eye, z_eye, -theta)
-                # figure.update_layout(scene_camera_eye=dict(x=x_rotate, y=y_rotate, z=z_rotate))
-                # figure.write_image(temp + '/' + no + '.png',scale=10)
+                self.update_process('Rotating...', i + 1)
+                x_rotate, y_rotate, z_rotate = rotate_z(x_eye, y_eye, z_eye, -theta)
+                figure.update_layout(scene_camera_eye=dict(x=x_rotate, y=y_rotate, z=z_rotate))
+                figure.write_image(temp + '/' + no + '.png',scale=10)
 
             self.end_process('Rotating...')
-            # files = sorted(glob.glob(temp + '/*.png'))
-            # images = list(map(lambda file: Image.open(file) , files))
-            # images[0].save(result_path + '/' + filename + '_scatter3D.gif', save_all = True, append_images=images[1:], duration=500, loop=0)
-            self.set_message('scatSave','Scatter 3D is saved.')
+            files = sorted(glob.glob(temp + '/*.png'))
+            images = list(map(lambda file: Image.open(file) , files))
+            images[0].save(result_path + '/' + filename + type + '_scatter3D.gif', save_all = True, append_images=images[1:], duration=500, loop=0)
+            self.update_message('scatSave','Scatter 3D is saved.')
+
+    def get_resultname(self, name, suffix, ext, dir='.'):
+        '''Whether file already exists or not. If file already exists, return new file name.
+        
+        Prameters
+        name : str
+            File name.
+        suffix : str
+            e.g. "_BGRHist"
+        ext : str
+            Extension, require period. e.g. ".html"
+        dir : str
+            Result directory, require last slash. e.g. "~/Results/"
+        
+        Returns
+        resultname : str
+            Result file name and path
+        
+        '''
+        result_name = dir + name + suffix + ext
+        if os.path.exists(result_name):
+            self.add_message('save', name + suffix + ' already exists.')
+            for i in itertools.count(1):
+                new_name = dir + name + suffix + '(' + str(i) + ')' + ext
+                if not os.path.exists(new_name):
+                    break
+            return new_name
+        else:
+            return result_name
 
 if __name__ == '__main__':
     main()
